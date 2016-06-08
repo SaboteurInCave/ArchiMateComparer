@@ -1,0 +1,2 @@
+# ArchiMateComparer
+Rostock assigment project
