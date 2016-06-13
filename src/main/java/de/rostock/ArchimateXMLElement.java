@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class ArchimateElement {
+public class ArchimateXMLElement {
    private HashMap<String, String> attributes;
 
-    public ArchimateElement(List<Attribute> xmlAttributes) {
+    public ArchimateXMLElement(List<Attribute> xmlAttributes) {
 
         attributes = new HashMap<String, String>();
 
