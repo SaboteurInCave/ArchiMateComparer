@@ -22,4 +22,13 @@ public class DiagramObject {
     public String getParent() {
         return parent;
     }
+
+    @Override
+    public String toString() {
+        return "DiagramObject{" +
+                "id='" + id + '\'' +
+                ", objectBounds=" + objectBounds +
+                ", parent='" + parent + '\'' +
+                '}';
+    }
 }

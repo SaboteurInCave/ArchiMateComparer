@@ -1,9 +1,9 @@
 package de.rostock;
 
-public class Group extends DiagramObject {
+public class ArchimateGroup extends DiagramObject {
     private String name, fillColor;
 
-    public Group(String id, ObjectBounds objectBounds, String parent, String name, String fillColor) {
+    public ArchimateGroup(String id, ObjectBounds objectBounds, String parent, String name, String fillColor) {
         super(id, objectBounds, parent);
         this.name = name;
         this.fillColor = fillColor;
@@ -19,7 +19,7 @@ public class Group extends DiagramObject {
 
     @Override
     public String toString() {
-        return "Group{" +
+        return "ArchimateGroup{" +
                 "id='" + getId() + '\'' +
                 ", name='" + name + '\'' +
                 ", fillColor='" + fillColor + '\'' +

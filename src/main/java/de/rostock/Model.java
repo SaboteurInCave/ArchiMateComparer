@@ -63,7 +63,7 @@ class Model {
         }
     }
 
-    private void parseObjects(List<Element> children, ArchimateView archimateView) {
+    private void parseElements(List<Element> children, ArchimateView archimateView) {
         for (Element child : children) {
             String type = child.getAttributeValue("type", xsi);
 
@@ -72,6 +72,7 @@ class Model {
                     parseGroup(child, archimateView);
                     break;
                 case objectType:
+                    parseObject(child, archimateView);
                     break;
                 case referenceType:
                     break;
@@ -94,21 +95,83 @@ class Model {
                 bounds.getAttributeValue("height")
         );
 
-        Group viewGroup = new Group(id, objectBounds, null, name, fillColor);
+        ArchimateGroup viewGroup = new ArchimateGroup(id, objectBounds, null, name, fillColor);
         view.addGroup(viewGroup);
 
         List<Element> children = group.getChildren("child");
 
         if (children.size() > 0) {
-            parseObjects(children, view);
+            parseElements(children, view);
         }
+    }
+
+    private void parseConnection(Element connection, ArchimateObject item, ArchimateView view) {
+        String id = connection.getAttributeValue("id");
+        String source = connection.getAttributeValue("source");
+        String target = connection.getAttributeValue("target");
+        String relationship = connection.getAttributeValue("relationship");
+
+        item.addSourceConnection(id);
+
+        ArchimateConnection archimateConnection = new ArchimateConnection(id, source, target, relationship);
+
+        view.addConnection(archimateConnection);
+    }
+
+    private void parseObject(Element object, ArchimateView view) {
+        String id = object.getAttributeValue("id");
+        String textAlignment = object.getAttributeValue("textAlignment");
+        String archimateElement = object.getAttributeValue("archimateElement");
+
+        ArrayList<String> targetConnections = null;
+
+        if (object.getAttribute("targetConnections") != null) {
+            targetConnections = new ArrayList<>(Arrays.asList(object.getAttributeValue("targetConnections").split(" ")));
+        }
+
+        String folder = getFolderById(archimateElement);
+
+        /*
+        // For name searching in future
+        String objectName = folders.get(folder).stream()
+                .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), archimateElement))
+                .findFirst()
+                .get()
+                .getName();
+        */
+
+        Element bounds = object.getChild("bounds");
+        ObjectBounds objectBounds = new ObjectBounds(
+                bounds.getAttributeValue("x"),
+                bounds.getAttributeValue("y"),
+                bounds.getAttributeValue("width"),
+                bounds.getAttributeValue("height")
+        );
+
+        Element parent = object.getParentElement();
+
+        ArchimateObject archimateObject = new ArchimateObject(
+                id,
+                objectBounds,
+                parent.getAttributeValue("id"),
+                textAlignment,
+                archimateElement
+        );
+
+        List<Element> children = object.getChildren("sourceConnection");
+
+        for (Element child : children) {
+            parseConnection(child, archimateObject, view);
+        }
+
+        view.addObject(archimateObject);
     }
 
     private void parseView(Element diagram) {
         ArchimateView archimateView = new ArchimateView(diagram.getAttributeValue("name"));
         List<Element> children = diagram.getChildren("child");
 
-        parseObjects(children, archimateView);
+        parseElements(children, archimateView);
 
         System.out.println(archimateView);
     }
