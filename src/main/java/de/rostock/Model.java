@@ -168,7 +168,12 @@ class Model {
     }
 
     private void parseView(Element diagram) {
-        ArchimateView archimateView = new ArchimateView(diagram.getAttributeValue("name"));
+
+        String name = diagram.getAttributeValue("name");
+        String id = diagram.getAttributeValue("id");
+        String viewpoint = diagram.getAttribute("viewpoint") != null ? diagram.getAttributeValue("viewpoint") : null;
+
+        ArchimateView archimateView = new ArchimateView(name, id, viewpoint);
         List<Element> children = diagram.getChildren("child");
 
         parseElements(children, archimateView);

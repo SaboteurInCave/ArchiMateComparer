@@ -8,12 +8,17 @@ import java.util.HashMap;
  */
 public class ArchimateView {
     private String name;
+    private String id;
+    private String viewpoint;
     private HashMap<String, ArchimateGroup> groups = null;
     private HashMap<String, ArchimateObject> objects = null;
     private HashMap<String, ArchimateConnection> connections = null;
 
-    public ArchimateView(String name) {
+    public ArchimateView(String name, String id, String viewpoint) {
         this.name = name;
+        this.id = id;
+        this.viewpoint = viewpoint;
+
         groups = new HashMap<>();
         objects = new HashMap<>();
         connections = new HashMap<>();
@@ -70,9 +75,19 @@ public class ArchimateView {
 
         return "ArchimateView{" +
                 "\nname='" + name + '\'' +
+                "\nid='" + id + '\'' +
+                "\nviewpoint='" + viewpoint + '\'' +
                 ",\ngroups=" + groupsRepresentation() +
                 ",\nobjects=" + objectsRepresentation() +
                 ",\nconnections=" + connectionsRepresentation() + '\n' +
                 '}';
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getViewpoint() {
+        return viewpoint;
     }
 }
