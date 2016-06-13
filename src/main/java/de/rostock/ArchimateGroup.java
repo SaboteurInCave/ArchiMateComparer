@@ -20,6 +20,7 @@ public class ArchimateGroup extends DiagramObject {
     @Override
     public String toString() {
         return "ArchimateGroup{" +
+                super.toString() +
                 "id='" + getId() + '\'' +
                 ", name='" + name + '\'' +
                 ", fillColor='" + fillColor + '\'' +

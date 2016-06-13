@@ -30,6 +30,7 @@ public class ArchimateObject extends DiagramObject {
     @Override
     public String toString() {
         return "ArchimateObject{" +
+                super.toString() +
                 "textAlignment='" + textAlignment + '\'' +
                 ", archimateElement='" + archimateElement + '\'' +
                 ", targetConnections=" + targetConnections +

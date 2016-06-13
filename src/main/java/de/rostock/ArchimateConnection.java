@@ -29,6 +29,7 @@ public class ArchimateConnection {
     @Override
     public String toString() {
         return "ArchimateConnection{" +
+                super.toString() +
                 "id='" + id + '\'' +
                 ", source='" + source + '\'' +
                 ", target='" + target + '\'' +
