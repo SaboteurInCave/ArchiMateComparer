@@ -48,7 +48,7 @@ public class ArchimateXMLElement {
      * @throws NoSuchElementException
      */
     public String getType() throws NoSuchElementException {
-        return getValue("xsi:type");
+        return getValue("type");
     }
 
     /**

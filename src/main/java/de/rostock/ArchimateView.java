@@ -1,6 +1,7 @@
 package de.rostock;
 
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 
 
 /**
@@ -13,6 +14,7 @@ public class ArchimateView {
     private HashMap<String, ArchimateGroup> groups = null;
     private HashMap<String, ArchimateObject> objects = null;
     private HashMap<String, ArchimateConnection> connections = null;
+    private Graph graph;
 
     public ArchimateView(String name, String id, String viewpoint) {
         this.name = name;
@@ -22,6 +24,7 @@ public class ArchimateView {
         groups = new HashMap<>();
         objects = new HashMap<>();
         connections = new HashMap<>();
+        graph = new Graph();
     }
 
     public String getName() {
@@ -89,5 +92,21 @@ public class ArchimateView {
 
     public String getViewpoint() {
         return viewpoint;
+    }
+
+    public HashMap<String, ArchimateConnection> getConnections() {
+        return connections;
+    }
+
+    public ArchimateObject getObject(String id) {
+        if (objects.containsKey(id)) {
+            return objects.get(id);
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+
+    public Graph getGraph() {
+        return graph;
     }
 }

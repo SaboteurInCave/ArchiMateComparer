@@ -19,6 +19,7 @@ class Model {
 
     private HashMap<String, ArrayList<ArchimateXMLElement>> folders;
     private HashMap<String, String> idFolder;
+    private List<ArchimateView> views;
 
     // namespaces
 
@@ -33,6 +34,7 @@ class Model {
         this.path = path;
         folders = new HashMap<>();
         idFolder = new HashMap<>();
+        views = new ArrayList<>();
 
         parseModel();
     }
@@ -164,6 +166,13 @@ class Model {
             parseConnection(child, archimateObject, view);
         }
 
+        children = object.getChildren("child");
+
+        // get childrens
+        if (children.size() > 0) {
+            parseElements(children, view);
+        }
+
         view.addObject(archimateObject);
     }
 
@@ -178,7 +187,46 @@ class Model {
 
         parseElements(children, archimateView);
 
-        System.out.println(archimateView);
+        views.add(archimateView);
+
+        System.out.println("View: " + archimateView.getName());
+        makeGraph(archimateView);
+        System.out.println("===");
+    }
+
+    private GraphElement getGraphElement(String id) {
+        String folder = getFolderById(id);
+
+        ArchimateXMLElement value =
+                folders.get(folder)
+                .stream()
+                .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), id))
+                .findFirst().get();
+
+        return new GraphElement(value.getName(), value.getType());
+    }
+
+    void makeGraph(ArchimateView view) {
+        HashMap<String, ArchimateConnection> connections = view.getConnections();
+
+        connections.forEach((id, connection) -> {
+
+            ArchimateObject fromObject = view.getObject(connection.getSource());
+            ArchimateObject toObject = view.getObject(connection.getTarget());
+
+            GraphElement from = getGraphElement(fromObject.getArchimateElement());
+            GraphElement to = getGraphElement(toObject.getArchimateElement());
+
+            ArchimateXMLElement value =
+                    folders.get("Relations")
+                            .stream()
+                            .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), connection.getRelationship()))
+                            .findFirst().get();
+
+            view.getGraph().addEdge(from, to, value.getType());
+        });
+
+        System.out.println(view.getGraph());
     }
 
     void parseModel() {
@@ -208,10 +256,9 @@ class Model {
                     namespaces);
 
 
-            List<Element> views = query.evaluate(document);
+            List<Element> rawViews = query.evaluate(document);
 
-            views.forEach(this::parseView);
-
+            rawViews.forEach(this::parseView);
         } catch (JDOMException | IOException  | NoSuchElementException e) {
             e.printStackTrace();
         }

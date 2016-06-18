@@ -27,6 +27,10 @@ public class ArchimateObject extends DiagramObject {
         sourceConnections.add(connection);
     }
 
+    public String getArchimateElement() {
+        return archimateElement;
+    }
+
     @Override
     public String toString() {
         return "ArchimateObject{" +
