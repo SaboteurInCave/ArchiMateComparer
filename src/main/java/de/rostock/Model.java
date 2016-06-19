@@ -189,9 +189,13 @@ class Model {
 
         views.add(archimateView);
 
-        System.out.println("View: " + archimateView.getName());
         makeGraph(archimateView);
+
+        /*
+        System.out.println("View: " + archimateView.getName());
+
         System.out.println("===");
+        */
     }
 
     private GraphElement getGraphElement(String id) {
@@ -226,7 +230,7 @@ class Model {
             view.getGraph().addEdge(from, to, value.getType());
         });
 
-        System.out.println(view.getGraph());
+        //System.out.println(view.getGraph());
     }
 
     void parseModel() {
@@ -296,5 +300,9 @@ class Model {
 
     public Element getRoot() {
         return root;
+    }
+
+    public List<ArchimateView> getViews() {
+        return views;
     }
 }
