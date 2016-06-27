@@ -23,8 +23,8 @@ class Model {
 
     // namespaces
 
-    final private Namespace xsi = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-    final private Namespace archimate = Namespace.getNamespace("archimate", "http://www.archimatetool.com/archimate");
+    final static public Namespace xsi = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    final static public Namespace archimate = Namespace.getNamespace("archimate", "http://www.archimatetool.com/archimate");
 
     final private String groupType = "archimate:Group";
     final private String objectType = "archimate:DiagramObject";
@@ -39,7 +39,7 @@ class Model {
         parseModel();
     }
 
-    private String getFolderById(final String objectId) {
+    public String getFolderById(final String objectId) {
         if (idFolder.containsKey(objectId)) {
             return idFolder.get(objectId);
         } else {
@@ -48,21 +48,36 @@ class Model {
     }
 
     private void iterateElements(Element folder, final String originalFolder) {
-        for (Element element : folder.getChildren()) {
+        folder.getChildren().forEach(element -> {
             final String name = element.getName();
 
             if (name.equals("folder")) {
                 iterateElements(element, originalFolder);
             } else if (name.equals("element")) {
-                if (!folders.containsKey(originalFolder)) {
-                    folders.put(originalFolder, new ArrayList<>());
-                }
-
-                ArchimateXMLElement newElement = new ArchimateXMLElement(element.getAttributes());
-                folders.get(originalFolder).add(newElement);
-                idFolder.put(newElement.getId(), originalFolder);
+                addArchElement(new ArchimateXMLElement(element.getAttributes()), originalFolder);
             }
+        });
+    }
+
+    public void addArchElement(final ArchimateXMLElement element, final String folder) {
+        if (!folders.containsKey(folder)) {
+            folders.put(folder, new ArrayList<>());
         }
+
+        folders.get(folder).add(element);
+        idFolder.put(element.getId(), folder);
+    }
+
+    public void saveArchElement(final ArchimateXMLElement addedElement, final String folder) {
+        root.getChildren("folder")
+            .stream()
+            .filter(element -> element.getAttributeValue("type").equals(folder))
+            .findFirst()
+            .ifPresent(folderElement -> {
+                Element newElement = new Element("element");
+                addedElement.getAttributesKeys().forEach(key -> newElement.setAttribute(key, addedElement.getValue(key)));
+                folderElement.setContent(newElement);
+            });
     }
 
     private void parseElements(List<Element> children, ArchimateView archimateView) {
@@ -79,7 +94,8 @@ class Model {
                 case referenceType:
                     break;
                 default:
-                    throw new NoSuchElementException(type + " isn't allowed!");
+                    System.err.println(type + " isn't allowed!");
+                    //throw new NoSuchElementException(type + " isn't allowed!");
             }
         }
     }
@@ -132,15 +148,6 @@ class Model {
         }
 
         String folder = getFolderById(archimateElement);
-
-        /*
-        // For name searching in future
-        String objectName = folders.get(folder).stream()
-                .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), archimateElement))
-                .findFirst()
-                .get()
-                .getName();
-        */
 
         Element bounds = object.getChild("bounds");
         ObjectBounds objectBounds = new ObjectBounds(
@@ -198,16 +205,25 @@ class Model {
         */
     }
 
-    private GraphElement getGraphElement(String id) {
-        String folder = getFolderById(id);
+    public ArchimateXMLElement getElementById(final String elementId, final String folder) {
+        return folders.get(folder)
+                    .stream()
+                    .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), elementId))
+                    .findFirst().get();
+    }
 
-        ArchimateXMLElement value =
-                folders.get(folder)
-                .stream()
-                .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), id))
-                .findFirst().get();
 
-        return new GraphElement(value.getName(), value.getType());
+
+    private GraphElement getGraphElement(String elementId, String objectId) {
+        String folder = getFolderById(elementId);
+
+        ArchimateXMLElement value = getElementById(elementId, folder);
+
+        if (value != null) {
+            return new GraphElement(value.getName(), value.getType(), objectId);
+        } else {
+            return null;
+        }
     }
 
     void makeGraph(ArchimateView view) {
@@ -218,19 +234,17 @@ class Model {
             ArchimateObject fromObject = view.getObject(connection.getSource());
             ArchimateObject toObject = view.getObject(connection.getTarget());
 
-            GraphElement from = getGraphElement(fromObject.getArchimateElement());
-            GraphElement to = getGraphElement(toObject.getArchimateElement());
+            GraphElement from = getGraphElement(fromObject.getArchimateElement(), fromObject.getId());
+            GraphElement to = getGraphElement(toObject.getArchimateElement(), toObject.getId());
 
             ArchimateXMLElement value =
-                    folders.get("Relations")
+                    folders.get("relations")
                             .stream()
                             .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), connection.getRelationship()))
                             .findFirst().get();
 
-            view.getGraph().addEdge(from, to, value.getType());
+            view.getGraph().addEdge(from, to, value.getType(), value.getId());
         });
-
-        //System.out.println(view.getGraph());
     }
 
     void parseModel() {
@@ -245,7 +259,7 @@ class Model {
 
             // try to get elements of model
             for (Element folder : fileFolders) {
-                iterateElements(folder, folder.getAttributeValue("name"));
+                iterateElements(folder, folder.getAttributeValue("type"));
             }
 
             // model parsing

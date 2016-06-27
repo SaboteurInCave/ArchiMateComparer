@@ -6,14 +6,17 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class Graph {
-    private HashMap<GraphElement, ArrayList<GraphConnection>> graph;
+    private HashMap<GraphElement, ArrayList<GraphConnection>> graph; // graph representation - doesn't changes at all if diff views
+    private HashMap<GraphElement, String> elementIdMap; // elementMapping - if we will add new vertex, we need to add id to elementIdMap
 
     public Graph() {
         graph = new HashMap<>();
+        elementIdMap = new HashMap<>();
     }
 
     public Graph(Graph newGraph) {
         graph = new HashMap<>();
+        elementIdMap = new HashMap<>();
 
         HashMap<GraphElement, ArrayList<GraphConnection>> graphMap = newGraph.getGraph();
 
@@ -25,7 +28,7 @@ public class Graph {
                 newConnection.add(new GraphConnection(graphConnection));
             });
 
-            this.graph.put(vertex, newConnection);
+            addEdge(vertex, newConnection);
         });
     }
 
@@ -33,17 +36,41 @@ public class Graph {
         return graph;
     }
 
-    public void addEdge(GraphElement from, GraphElement to, String relationType) {
-        GraphConnection newConnection = new GraphConnection(to, relationType);
+    public void addElementToMap(final GraphElement element) {
+        if (!elementIdMap.containsKey(element)) {
+            elementIdMap.put(element, element.getElementId());
+        }
+    }
+
+    public String getElementId(GraphElement element) {
+        if (elementIdMap.containsKey(element)) {
+            return elementIdMap.get(element);
+        } else {
+            return null;
+        }
+    }
+
+    public void addEdge(GraphElement from, GraphElement to, String relationType, String relationId) {
+        GraphConnection newConnection = new GraphConnection(to, relationType, relationId);
+
+        addElementToMap(from);
+        addElementToMap(to);
 
         if (!graph.containsKey(from)) {
             graph.put(from, new ArrayList<>());
+        }
+
+        if (!graph.containsKey(to)) {
+            graph.put(to, new ArrayList<>());
         }
 
         graph.get(from).add(newConnection);
     }
 
     public void addEdge(GraphElement vertex, ArrayList<GraphConnection> connections) {
+
+        addElementToMap(vertex);
+
         if (!graph.containsKey(vertex)) {
             graph.put(vertex, connections);
         }

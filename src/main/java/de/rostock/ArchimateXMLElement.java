@@ -1,11 +1,14 @@
 package de.rostock;
 
 import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import static de.rostock.Model.xsi;
 
 public class ArchimateXMLElement {
    private HashMap<String, String> attributes;
@@ -31,6 +34,30 @@ public class ArchimateXMLElement {
         } else {
             throw new NoSuchElementException();
         }
+    }
+
+
+    /**
+     * Set attribute value by name
+     * @param name
+     * @param value
+     * @throws NoSuchElementException
+     */
+    public void setValue(final String name, final String value) throws NoSuchElementException {
+        if (attributes.containsKey(name)) {
+            attributes.put(name, value);
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+
+    /**
+     * Helper function for setting id
+     * @param id
+     * @throws NoSuchElementException
+     */
+    public void setId(final String id) throws NoSuchElementException {
+        setValue("id", id);
     }
 
     /**
@@ -82,8 +109,47 @@ public class ArchimateXMLElement {
      * Get all attributes names of element
      * @return set of names
      */
-    public Set<String> getNames() {
+    public Set<String> getAttributesKeys() {
         return attributes.keySet();
+    }
+
+    public Element createElement(final ArchimateElementType type) {
+        Element element = new Element("element");
+
+        if (type.equals(ArchimateElementType.element)) {
+
+            element.setAttribute("type", attributes.get("type"), xsi);
+            element.setAttribute("id", attributes.get("id"));
+            element.setAttribute("name", attributes.get("name"));
+
+        } else if (type.equals(ArchimateElementType.relation)) {
+
+            element.setAttribute("type", attributes.get("type"), xsi);
+            element.setAttribute("id", attributes.get("id"));
+            element.setAttribute("source", attributes.get("source"));
+            element.setAttribute("target", attributes.get("target"));
+
+        }
+        else {
+            attributes
+                .keySet()
+                .forEach(s -> {
+                    boolean addNamespace = false;
+
+                    if (s.equals("type")) {
+                        addNamespace = true;
+                    }
+
+                    if (addNamespace) {
+                        element.setAttribute(s, attributes.get(s), xsi);
+                    } else {
+                        element.setAttribute(s, attributes.get(s));
+                    }
+                });
+        }
+
+
+        return element;
     }
 
     @Override

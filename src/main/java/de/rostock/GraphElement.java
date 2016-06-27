@@ -1,11 +1,12 @@
 package de.rostock;
 
 public class GraphElement {
-    private String name,type;
+    private String name,type, elementId;
 
-    public GraphElement(String name, String type) {
+    public GraphElement(String name, String type, String elementId) {
         this.name = name;
         this.type = type;
+        this.elementId = elementId;
     }
 
     public String getName() {
@@ -14,6 +15,10 @@ public class GraphElement {
 
     public String getType() {
         return type;
+    }
+
+    public String getElementId() {
+        return elementId;
     }
 
     @Override

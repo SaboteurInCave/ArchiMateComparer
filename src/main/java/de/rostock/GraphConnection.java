@@ -2,29 +2,35 @@ package de.rostock;
 
 public class GraphConnection {
     private GraphElement vertex;
-    private String edge;
+    private String edgeType, edgeId;
 
-    public GraphConnection(GraphElement vertex, String edge) {
+    public GraphConnection(GraphElement vertex, String edgeType, String edgeId) {
         this.vertex = vertex;
-        this.edge = edge;
+        this.edgeType = edgeType;
+        this.edgeId = edgeId;
     }
 
     public GraphConnection(GraphConnection connection) {
         this.vertex = connection.getVertex();
-        this.edge = connection.getEdge();
+        this.edgeType = connection.getEdgeType();
+        this.edgeId = connection.getEdgeId();
     }
 
     public GraphElement getVertex() {
         return vertex;
     }
 
-    public String getEdge() {
-        return edge;
+    public String getEdgeType() {
+        return edgeType;
+    }
+
+    public String getEdgeId() {
+        return edgeId;
     }
 
     @Override
     public String toString() {
-        return "vertex: " + vertex + " by " + edge;
+        return "vertex: " + vertex + " by (" + edgeId + ": " + edgeType + ")";
     }
 
     @Override
@@ -35,14 +41,14 @@ public class GraphConnection {
         GraphConnection that = (GraphConnection) o;
 
         if (vertex != null ? !vertex.equals(that.vertex) : that.vertex != null) return false;
-        return edge != null ? edge.equals(that.edge) : that.edge == null;
+        return edgeType != null ? edgeType.equals(that.edgeType) : that.edgeType == null;
 
     }
 
     @Override
     public int hashCode() {
         int result = vertex != null ? vertex.hashCode() : 0;
-        result = 31 * result + (edge != null ? edge.hashCode() : 0);
+        result = 31 * result + (edgeType != null ? edgeType.hashCode() : 0);
         return result;
     }
 }

@@ -16,6 +16,7 @@ public class ArchimateView {
     private HashMap<String, ArchimateConnection> connections = null;
     private Graph graph;
 
+
     public ArchimateView(String name, String id, String viewpoint) {
         this.name = name;
         this.id = id;
@@ -24,6 +25,7 @@ public class ArchimateView {
         groups = new HashMap<>();
         objects = new HashMap<>();
         connections = new HashMap<>();
+
         graph = new Graph();
     }
 
@@ -96,6 +98,10 @@ public class ArchimateView {
 
     public HashMap<String, ArchimateConnection> getConnections() {
         return connections;
+    }
+
+    public HashMap<String, ArchimateObject> getObjects() {
+        return objects;
     }
 
     public ArchimateObject getObject(String id) {
