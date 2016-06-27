@@ -43,26 +43,21 @@ public class ModelDiff {
         oldDoc = initDoc(oldModel.getRoot());
         newDoc = initDoc(newModel.getRoot());
 
-        newViews.forEach(newView -> {
-            ArchimateView oldView = oldViews.stream().filter(view -> Objects.equals(newView.getName(), view.getName())).findFirst().get();
+        newViews.forEach(newView -> oldViews.stream().filter(view -> Objects.equals(newView.getName(), view.getName())).findFirst().map(oldView -> {
+            Graph added = new Graph(newView.getGraph());
+            Graph removed = new Graph(oldView.getGraph());
 
-            if (oldView != null) {
+            normalize(added, oldView.getGraph());
+            normalize(removed, newView.getGraph());
 
-                //getMapping(oldView, newView);
+            getTextDiff(newView.getName(), added, removed);
+            getFileDiff(newView.getName(), added, removed);
 
-                Graph added = new Graph(newView.getGraph());
-                Graph removed = new Graph(oldView.getGraph());
-
-                normalize(added, oldView.getGraph());
-                normalize(removed, newView.getGraph());
-
-                getTextDiff(newView.getName(), added, removed);
-                getFileDiff(newView.getName(), added, removed);
-            } else {
-                System.out.println("WARNING: " + newView.getName() + " was not founded!");
-            }
-
-        });
+            return oldView;
+        }).orElseGet(() -> {
+            System.out.println(newView.getName() + " is new for old model!");
+            return null;
+        }));
 
         XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
         try {
@@ -72,33 +67,6 @@ public class ModelDiff {
             e.printStackTrace();
         }
     }
-
-    private void getMapping(final ArchimateView oldView, final ArchimateView newView) {
-
-        HashMap<String, ArchimateObject> oldObjects = oldView.getObjects();
-
-        newView.getObjects().forEach((s, archimateObject) -> {
-
-            String elementId = archimateObject.getArchimateElement();
-
-            ArchimateXMLElement element = newModel.getElementById(elementId, newModel.getFolderById(elementId));
-
-            List<ArchimateObject> objects = oldObjects.entrySet()
-                    .stream()
-                    .filter(objectEntry -> objectEntry.getValue().equals(archimateObject))
-                    .map(Map.Entry::getValue)
-                    .collect(Collectors.toList());
-
-            if (objects.size() == 1) {
-                idMapping.put(archimateObject.getId(), objects.get(0).getId());
-            } else {
-                System.out.println("!!! " + objects);
-            }
-        });
-
-        System.out.println(idMapping);
-    }
-
 
 
     /**
@@ -174,6 +142,14 @@ public class ModelDiff {
         return query.evaluateFirst(doc);
     }
 
+    private Element searchRelation(final String source, final String target, final Document doc) {
+        String queryString = "//element[@source='" + source + "' and @target='" + target + "']";
+
+        XPathExpression<Element> query = xFactory.compile(queryString, Filters.element(), null, namespaces);
+
+        return query.evaluateFirst(doc);
+    }
+
     private void getTextDiff(final String name, final Graph added, final Graph removed) {
         System.out.println("View: " + name);
         System.out.println("===ADDED===");
@@ -183,9 +159,7 @@ public class ModelDiff {
         System.out.println(removed);
     }
 
-    private Element addNewRelationship(final List<GraphElement> endPoints, final String relationType) {
-        // first - source, second - target
-        String relationshipId = UUID.randomUUID().toString();
+    private List<String> getOriginalRelationEndPoints(final List<GraphElement> endPoints) {
         ArrayList<String> id = new ArrayList<>();
 
         for (GraphElement endPoint : endPoints) {
@@ -198,11 +172,20 @@ public class ModelDiff {
             }
         }
 
+        return id;
+    }
+
+    private Element addNewRelationship(ArrayList<String> idPoints, final String relationType) {
+        // first - source, second - target
+        String relationshipId = UUID.randomUUID().toString();
+
+        System.out.println("addNewRelationship: " + idPoints);
+
         ArchimateXMLElement xmlElement = new ArchimateXMLElement(Arrays.asList(
                 new Attribute("id", relationshipId),
                 new Attribute("type", relationType, xsi),
-                new Attribute("source", id.get(0)),
-                new Attribute("target", id.get(1))
+                new Attribute("source", idPoints.get(0)),
+                new Attribute("target", idPoints.get(1))
         ));
 
         Element element = xmlElement.createElement(ArchimateElementType.relation);
@@ -239,9 +222,27 @@ public class ModelDiff {
 
         // at first - just add vertex (elements) to element map and view
         added.getGraph().forEach((element, connections) -> {
-            if (!removed.containVertex(element) && removed.getElementId(element) == null) {
+
+            Element oldElement = searchElement(element.getName(), element.getType(), oldDoc);
+
+            if (!removed.containVertex(element) && oldElement == null) {
                 // new element found
                 addElement(viewName, added, removed, element);
+            } else {
+                System.out.println("Just need to add " + element + " to view");
+
+                Element newChild = getChildById(viewName, element.getElementId(), newDoc);
+
+                if (newChild != null) {
+
+                    String oldId = oldElement.getAttributeValue("id");
+                    boolean isOldElementInView = getChildByArchimateElement(viewName, oldId, oldDoc) == null;
+
+                    addNewElementToParent(viewName, newChild.clone(), oldId, newChild.getParentElement(), isOldElementInView);
+                } else {
+                    System.err.println("Can't find " + element.getElementId());
+                }
+
             }
         });
 
@@ -250,6 +251,8 @@ public class ModelDiff {
         added.getGraph().forEach((element, connections) -> {
             connections.forEach(connection -> {
                 String relationId = connection.getEdgeId();
+
+                Element relationshipElement;
 
                 // save relation element
                 ArchimateXMLElement relation = newModel.getElementById(relationId, "relations");
@@ -269,15 +272,18 @@ public class ModelDiff {
                             targetElement.getAttributeValue("id"));
 
 
-                    ArrayList<GraphElement> endPoints = new ArrayList<GraphElement>(Arrays.asList(source, target));
+                    ArrayList<GraphElement> endPoints = new ArrayList<>(Arrays.asList(source, target));
+                    ArrayList<String> idPoints = new ArrayList<String>(getOriginalRelationEndPoints(endPoints));
 
-                    Element relationshipElement = addNewRelationship(endPoints, relation.getType());
+                    Element availableRelationship = searchRelation(idPoints.get(0), idPoints.get(1), oldDoc);
 
+                    relationshipElement = availableRelationship == null ? addNewRelationship(idPoints, relation.getType()) : availableRelationship;
+
+                    // working with relation
 
                     // find child by archimateElement
                     Element sourceChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("source"), oldDoc);
                     Element targetChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("target"), oldDoc);
-
 
                     // add ConnectionSource
                     String connectionId = UUID.randomUUID().toString();
@@ -303,8 +309,7 @@ public class ModelDiff {
                     }
 
                 } else {
-                    System.out.println("WARNING: relation with id " + relationId + " is not exists!");
-
+                    System.err.println("WARNING: relation with id " + relationId + " is not exists!");
                 }
             });
         });
@@ -335,41 +340,63 @@ public class ModelDiff {
 
                 createElement(folderElement.createElement(ArchimateElementType.element), originalFolder, oldDoc);
 
-                // remove all connections, because they will added in next iteration
-                addedElement.removeChildren("child");
-                addedElement.removeChildren("sourceConnection");
+                addNewElementToParent(viewName, addedElement, id, parent);
+            }
+        }
+    }
 
-                addedElement.setAttribute("id", id);
-                addedElement.setAttribute("fillColor", "#00ff00");
-                addedElement.removeAttribute("targetConnections");
+    private void addNewElementToParent(final String viewName, Element addedElement, final String id, final Element parent) {
+        addNewElementToParent(viewName, addedElement, id, parent, true);
+    }
 
-                // at first - we are adding elements to archimate:ArchimateDiagramModel and archimate:Group
+    private void addNewElementToParent(final String viewName, Element addedElement, final String id, final Element parent, final boolean isNew) {
 
-                String parentType = parent.getAttributeValue("type", xsi);
-                String parentName = parent.getAttributeValue("name");
+        // remove all connections, because they will added in next iteration
+        addedElement.removeChildren("child");
+        addedElement.removeChildren("sourceConnection");
+        addedElement.removeAttribute("targetConnections");
 
-                Element parentElement = null;
+        if (isNew) {
+            addedElement.setAttribute("id", id);
+            addedElement.setAttribute("fillColor", "#00ff00");
 
-                if (parentType.equals("archimate:ArchimateDiagramModel")) {
+            Element parentElement = null;
+
+            String parentType = parent.getAttributeValue("type", xsi);
+            String parentName = parent.getAttributeValue("name");
+
+            switch (parentType) {
+                case "archimate:ArchimateDiagramModel":
                     parentElement = xFactory.compile("//*[@name='" + parentName + "' and @xsi:type='" + parentType + "']", Filters.element(), null, namespaces)
                             .evaluateFirst(oldDoc);
-                } else if (parentType.equals("archimate:Group")) {
+                    break;
+                case "archimate:Group":
                     String query = "//folder[@type='diagrams']/element[@name='" + viewName + "']/child[@name='" + parentName + "' and @xsi:type='" + parentType + "']";
                     parentElement = xFactory.compile(query, Filters.element(), null, namespaces).evaluateFirst(oldDoc);
-                }
+                    break;
+                case "archimate:DiagramObject":
+                    Element parentObjectElementNew = getElementById(parent.getAttributeValue("archimateElement"), newDoc);
 
-                if (parentElement != null) {
-                    parentElement.addContent(addedElement);
+                    Element parentObjectElementOld = searchElement(parentObjectElementNew.getAttributeValue("name"), parentObjectElementNew.getAttributeValue("type", xsi), oldDoc);
 
-                    if (parentElement.getChild("bounds") != null && parent.getChild("bounds") != null) {
-                        parentElement.removeChild("bounds");
-                        parentElement.addContent(parent.getChild("bounds").clone());
+                    if (parentObjectElementOld != null) {
+                        parentElement = getChildByArchimateElement(viewName, parentObjectElementOld.getAttributeValue("id"), oldDoc);
+                    } else {
+                        System.err.println("WARNING: parentObjectElementOld is null!");
                     }
+                    break;
+            }
 
-                } else {
-                    System.out.println("WARNING: " + parentType + ", " + parentName + " are not exist!");
+            if (parentElement != null) {
+                parentElement.addContent(addedElement);
+
+                if (parentElement.getChild("bounds") != null && parent.getChild("bounds") != null) {
+                    parentElement.removeChild("bounds");
+                    parentElement.addContent(parent.getChild("bounds").clone());
                 }
 
+            } else {
+                System.err.println("WARNING: " + parentType + ", " + parentName + " are not exist!");
             }
         }
     }

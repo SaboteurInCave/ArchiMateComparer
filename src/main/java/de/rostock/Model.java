@@ -94,8 +94,7 @@ class Model {
                 case referenceType:
                     break;
                 default:
-                    System.err.println(type + " isn't allowed!");
-                    //throw new NoSuchElementException(type + " isn't allowed!");
+                    System.err.println(type + " isn't supported!");
             }
         }
     }
