@@ -179,8 +179,6 @@ public class ModelDiff {
         // first - source, second - target
         String relationshipId = UUID.randomUUID().toString();
 
-        System.out.println("addNewRelationship: " + idPoints);
-
         ArchimateXMLElement xmlElement = new ArchimateXMLElement(Arrays.asList(
                 new Attribute("id", relationshipId),
                 new Attribute("type", relationType, xsi),
@@ -229,8 +227,8 @@ public class ModelDiff {
                 // new element found
                 addElement(viewName, added, removed, element);
             } else {
-                System.out.println("Just need to add " + element + " to view");
 
+                Element oldChild = getChildByArchimateElement(viewName, oldElement.getAttributeValue("id"), oldDoc);
                 Element newChild = getChildById(viewName, element.getElementId(), newDoc);
 
                 if (newChild != null) {
@@ -255,61 +253,65 @@ public class ModelDiff {
                 Element relationshipElement;
 
                 // save relation element
-                ArchimateXMLElement relation = newModel.getElementById(relationId, "relations");
 
-                if (relation != null) {
+                if (!Objects.equals(relationId, "-1")) {
 
-                    Element sourceElement = getElementById(relation.getSource(), newDoc);
-                    Element targetElement = getElementById(relation.getTarget(), newDoc);
+                    ArchimateXMLElement relation = newModel.getElementById(relationId, "relations");
 
-                    GraphElement source = new GraphElement( sourceElement.getAttributeValue("name"),
-                                                            sourceElement.getAttributeValue("type", xsi),
-                                                            sourceElement.getAttributeValue("id"));
+                    if (relation != null) {
 
+                        Element sourceElement = getElementById(relation.getSource(), newDoc);
+                        Element targetElement = getElementById(relation.getTarget(), newDoc);
 
-                    GraphElement target = new GraphElement( targetElement.getAttributeValue("name"),
-                            targetElement.getAttributeValue("type", xsi),
-                            targetElement.getAttributeValue("id"));
+                        GraphElement source = new GraphElement(sourceElement.getAttributeValue("name"),
+                                sourceElement.getAttributeValue("type", xsi),
+                                sourceElement.getAttributeValue("id"));
 
 
-                    ArrayList<GraphElement> endPoints = new ArrayList<>(Arrays.asList(source, target));
-                    ArrayList<String> idPoints = new ArrayList<String>(getOriginalRelationEndPoints(endPoints));
+                        GraphElement target = new GraphElement(targetElement.getAttributeValue("name"),
+                                targetElement.getAttributeValue("type", xsi),
+                                targetElement.getAttributeValue("id"));
 
-                    Element availableRelationship = searchRelation(idPoints.get(0), idPoints.get(1), oldDoc);
 
-                    relationshipElement = availableRelationship == null ? addNewRelationship(idPoints, relation.getType()) : availableRelationship;
+                        ArrayList<GraphElement> endPoints = new ArrayList<>(Arrays.asList(source, target));
+                        ArrayList<String> idPoints = new ArrayList<String>(getOriginalRelationEndPoints(endPoints));
 
-                    // working with relation
+                        Element availableRelationship = searchRelation(idPoints.get(0), idPoints.get(1), oldDoc);
 
-                    // find child by archimateElement
-                    Element sourceChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("source"), oldDoc);
-                    Element targetChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("target"), oldDoc);
+                        relationshipElement = availableRelationship == null ? addNewRelationship(idPoints, relation.getType()) : availableRelationship;
 
-                    // add ConnectionSource
-                    String connectionId = UUID.randomUUID().toString();
+                        // working with relation
 
-                    Element connectionElement = new Element("sourceConnection");
+                        // find child by archimateElement
+                        Element sourceChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("source"), oldDoc);
+                        Element targetChild = getChildByArchimateElement(viewName, relationshipElement.getAttributeValue("target"), oldDoc);
 
-                    connectionElement.setAttribute("type", "archimate:Connection", xsi);
-                    connectionElement.setAttribute("id", connectionId);
-                    connectionElement.setAttribute("source", sourceChild.getAttributeValue("id"));
-                    connectionElement.setAttribute("target", targetChild.getAttributeValue("id"));
-                    connectionElement.setAttribute("relationship", relationshipElement.getAttributeValue("id"));
+                        // add ConnectionSource
+                        String connectionId = UUID.randomUUID().toString();
 
-                    connectionElement.setAttribute("lineWidth", "2");
-                    connectionElement.setAttribute("lineColor", "#00ff00");
+                        Element connectionElement = new Element("sourceConnection");
 
-                    sourceChild.addContent(connectionElement);
+                        connectionElement.setAttribute("type", "archimate:Connection", xsi);
+                        connectionElement.setAttribute("id", connectionId);
+                        connectionElement.setAttribute("source", sourceChild.getAttributeValue("id"));
+                        connectionElement.setAttribute("target", targetChild.getAttributeValue("id"));
+                        connectionElement.setAttribute("relationship", relationshipElement.getAttributeValue("id"));
 
-                    // update targetConnection of target
-                    if (targetChild.getAttributeValue("targetConnections") != null) {
-                        targetChild.setAttribute("targetConnections", targetChild.getAttributeValue("targetConnections") + " " + connectionId);
+                        connectionElement.setAttribute("lineWidth", "2");
+                        connectionElement.setAttribute("lineColor", "#00ff00");
+
+                        sourceChild.addContent(connectionElement);
+
+                        // update targetConnection of target
+                        if (targetChild.getAttributeValue("targetConnections") != null) {
+                            targetChild.setAttribute("targetConnections", targetChild.getAttributeValue("targetConnections") + " " + connectionId);
+                        } else {
+                            targetChild.setAttribute("targetConnections", connectionId);
+                        }
+
                     } else {
-                        targetChild.setAttribute("targetConnections", connectionId);
+                        System.err.println("WARNING: relation with id " + relationId + " is not exists!");
                     }
-
-                } else {
-                    System.err.println("WARNING: relation with id " + relationId + " is not exists!");
                 }
             });
         });
@@ -334,13 +336,13 @@ public class ModelDiff {
                 ArchimateXMLElement folderElement = newModel.getElementById(addedElement.getAttributeValue("archimateElement"), originalFolder);
 
                 folderElement.setId(folderId);
-                addedElement.setAttribute("archimateElement", folderId);
+                //addedElement.setAttribute("archimateElement", folderId);
 
                 oldModel.saveArchElement(folderElement, originalFolder);
 
                 createElement(folderElement.createElement(ArchimateElementType.element), originalFolder, oldDoc);
 
-                addNewElementToParent(viewName, addedElement, id, parent);
+                addNewElementToParent(viewName, addedElement, folderId, parent);
             }
         }
     }
@@ -357,7 +359,8 @@ public class ModelDiff {
         addedElement.removeAttribute("targetConnections");
 
         if (isNew) {
-            addedElement.setAttribute("id", id);
+            addedElement.setAttribute("id", UUID.randomUUID().toString());
+            addedElement.setAttribute("archimateElement", id);
             addedElement.setAttribute("fillColor", "#00ff00");
 
             Element parentElement = null;

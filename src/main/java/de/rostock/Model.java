@@ -25,6 +25,7 @@ class Model {
 
     final static public Namespace xsi = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
     final static public Namespace archimate = Namespace.getNamespace("archimate", "http://www.archimatetool.com/archimate");
+    final static public String defaultRelation = "rostock:Relation";
 
     final private String groupType = "archimate:Group";
     final private String objectType = "archimate:DiagramObject";
@@ -126,7 +127,10 @@ class Model {
         String id = connection.getAttributeValue("id");
         String source = connection.getAttributeValue("source");
         String target = connection.getAttributeValue("target");
-        String relationship = connection.getAttributeValue("relationship");
+
+        String relationValue = connection.getAttributeValue("relationship");
+
+        String relationship = relationValue == null ? defaultRelation : relationValue;
 
         item.addSourceConnection(id);
 
@@ -139,12 +143,6 @@ class Model {
         String id = object.getAttributeValue("id");
         String textAlignment = object.getAttributeValue("textAlignment");
         String archimateElement = object.getAttributeValue("archimateElement");
-
-        ArrayList<String> targetConnections = null;
-
-        if (object.getAttribute("targetConnections") != null) {
-            targetConnections = new ArrayList<>(Arrays.asList(object.getAttributeValue("targetConnections").split(" ")));
-        }
 
         String folder = getFolderById(archimateElement);
 
@@ -168,8 +166,23 @@ class Model {
 
         List<Element> children = object.getChildren("sourceConnection");
 
-        for (Element child : children) {
-            parseConnection(child, archimateObject, view);
+        if (children.size() > 0) {
+            for (Element child : children) {
+                parseConnection(child, archimateObject, view);
+            }
+        } else {
+            // for case, when model doesn't have source connection, we can emulate relationship parent - child
+
+            if (!parent.getAttributeValue("type", xsi).equals("archimate:ArchimateDiagramModel")) {
+
+                Element fakeConnection = new Element("relationConnection");
+
+                fakeConnection.setAttribute("id", UUID.randomUUID().toString());
+                fakeConnection.setAttribute("source", parent.getAttributeValue("id"));
+                fakeConnection.setAttribute("target", object.getAttributeValue("id"));
+
+                parseConnection(fakeConnection, archimateObject, view);
+            }
         }
 
         children = object.getChildren("child");
@@ -236,13 +249,18 @@ class Model {
             GraphElement from = getGraphElement(fromObject.getArchimateElement(), fromObject.getId());
             GraphElement to = getGraphElement(toObject.getArchimateElement(), toObject.getId());
 
-            ArchimateXMLElement value =
-                    folders.get("relations")
-                            .stream()
-                            .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), connection.getRelationship()))
-                            .findFirst().get();
+            if (!connection.getRelationship().equals(defaultRelation)) {
 
-            view.getGraph().addEdge(from, to, value.getType(), value.getId());
+                ArchimateXMLElement value =
+                        folders.get("relations")
+                                .stream()
+                                .filter((ArchimateXMLElement element) -> Objects.equals(element.getId(), connection.getRelationship()))
+                                .findFirst().get();
+
+                view.getGraph().addEdge(from, to, value.getType(), value.getId());
+            } else {
+                view.getGraph().addEdge(from ,to, defaultRelation, "-1");
+            }
         });
     }
 
