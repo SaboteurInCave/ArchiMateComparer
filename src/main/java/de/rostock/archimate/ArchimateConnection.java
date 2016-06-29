@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.archimate;
 
 public class ArchimateConnection {
     private String id, source, target, relationship;

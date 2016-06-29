@@ -1,26 +1,26 @@
-package de.rostock;
+package de.rostock.graph;
 
 public class GraphConnection {
     private GraphElement vertex;
     private String edgeType, edgeId;
 
-    public GraphConnection(GraphElement vertex, String edgeType, String edgeId) {
+    GraphConnection(GraphElement vertex, String edgeType, String edgeId) {
         this.vertex = vertex;
         this.edgeType = edgeType;
         this.edgeId = edgeId;
     }
 
-    public GraphConnection(GraphConnection connection) {
+    GraphConnection(GraphConnection connection) {
         this.vertex = connection.getVertex();
         this.edgeType = connection.getEdgeType();
         this.edgeId = connection.getEdgeId();
     }
 
-    public GraphElement getVertex() {
+    private GraphElement getVertex() {
         return vertex;
     }
 
-    public String getEdgeType() {
+    private String getEdgeType() {
         return edgeType;
     }
 

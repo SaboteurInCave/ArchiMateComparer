@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.graph;
 
 public class GraphElement {
     private String name,type, elementId;

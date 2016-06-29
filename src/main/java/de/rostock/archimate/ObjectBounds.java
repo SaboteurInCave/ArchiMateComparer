@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.archimate;
 
 public class ObjectBounds {
     private String x, y, width, height;

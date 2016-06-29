@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.archimate;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.archimate;
 
 public class ArchimateGroup extends DiagramObject {
     private String name, fillColor;

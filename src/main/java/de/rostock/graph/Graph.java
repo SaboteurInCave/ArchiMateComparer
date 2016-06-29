@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.graph;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,9 +24,7 @@ public class Graph {
 
             ArrayList<GraphConnection> newConnection = new ArrayList<>();
 
-            connections.forEach(graphConnection -> {
-                newConnection.add(new GraphConnection(graphConnection));
-            });
+            connections.forEach(graphConnection -> newConnection.add(new GraphConnection(graphConnection)));
 
             addEdge(vertex, newConnection);
         });
@@ -36,7 +34,7 @@ public class Graph {
         return graph;
     }
 
-    public void addElementToMap(final GraphElement element) {
+    private void addElementToMap(final GraphElement element) {
         if (!elementIdMap.containsKey(element)) {
             elementIdMap.put(element, element.getElementId());
         }
@@ -67,7 +65,7 @@ public class Graph {
         graph.get(from).add(newConnection);
     }
 
-    public void addEdge(GraphElement vertex, ArrayList<GraphConnection> connections) {
+    private void addEdge(GraphElement vertex, ArrayList<GraphConnection> connections) {
 
         addElementToMap(vertex);
 

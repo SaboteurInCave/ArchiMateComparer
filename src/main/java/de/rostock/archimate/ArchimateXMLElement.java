@@ -1,4 +1,4 @@
-package de.rostock;
+package de.rostock.archimate;
 
 import org.jdom2.Attribute;
 import org.jdom2.Element;
@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static de.rostock.Model.xsi;
+import static de.rostock.model.Model.xsi;
 
 public class ArchimateXMLElement {
    private HashMap<String, String> attributes;
 
     public ArchimateXMLElement(List<Attribute> xmlAttributes) {
 
-        attributes = new HashMap<String, String>();
+        attributes = new HashMap<>();
 
         for (Attribute attribute : xmlAttributes) {
             attributes.put(attribute.getName(), attribute.getValue());
@@ -39,9 +39,9 @@ public class ArchimateXMLElement {
 
     /**
      * Set attribute value by name
-     * @param name
-     * @param value
-     * @throws NoSuchElementException
+     * @param name name of attribute
+     * @param value value of attribute
+     * @throws NoSuchElementException if attributes doesn't contain name
      */
     public void setValue(final String name, final String value) throws NoSuchElementException {
         if (attributes.containsKey(name)) {
@@ -53,7 +53,7 @@ public class ArchimateXMLElement {
 
     /**
      * Helper function for setting id
-     * @param id
+     * @param id id value of element
      * @throws NoSuchElementException
      */
     public void setId(final String id) throws NoSuchElementException {

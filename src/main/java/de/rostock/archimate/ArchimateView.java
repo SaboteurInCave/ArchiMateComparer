@@ -1,4 +1,6 @@
-package de.rostock;
+package de.rostock.archimate;
+
+import de.rostock.graph.Graph;
 
 import java.util.HashMap;
 import java.util.NoSuchElementException;

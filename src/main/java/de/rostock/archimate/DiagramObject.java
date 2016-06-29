@@ -1,11 +1,11 @@
-package de.rostock;
+package de.rostock.archimate;
 
 public class DiagramObject {
     private String id;
     private ObjectBounds objectBounds;
     private String parent;
 
-    public DiagramObject(String id, ObjectBounds objectBounds, String parent) {
+    DiagramObject(String id, ObjectBounds objectBounds, String parent) {
         this.id = id;
         this.objectBounds = objectBounds;
         this.parent = parent;
@@ -15,7 +15,7 @@ public class DiagramObject {
         return id;
     }
 
-    public ObjectBounds getObjectBounds() {
+    ObjectBounds getObjectBounds() {
         return objectBounds;
     }
 
