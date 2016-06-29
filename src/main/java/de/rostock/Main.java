@@ -1,16 +1,35 @@
 package de.rostock;
 
+import com.google.gson.JsonSyntaxException;
 import de.rostock.model.Model;
 import de.rostock.model.ModelDiff;
+import de.rostock.util.Options;
+
+import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        if (args.length < 3)
-            throw new Exception("There should be 3 input arguments!");
+    public static void main(String[] args)  {
 
-        Model oldModel = new Model(args[0]);
-        Model newModel = new Model(args[1]);
+        if (args.length < 1) {
+            System.err.println("Can't find options file!");
+            System.exit(-1);
+        }
 
-        new ModelDiff(oldModel, newModel, args[2]).diff();
+        Options options = new Options(args[0]);
+
+        try {
+            options.load();
+
+            Model oldModel = new Model(options.getOldModelPath());
+            Model newModel = new Model(options.getNewModelPath());
+
+            new ModelDiff(oldModel, newModel, options.getDiffModelPath()).diff();
+
+        } catch (IOException e) {
+            System.err.println("Problems with IO: " + e.getMessage());
+        } catch (JsonSyntaxException e) {
+            System.err.println("Problems with JSON syntax: " + e.getMessage());
+        }
+
     }
 }
