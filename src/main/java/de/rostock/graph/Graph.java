@@ -1,22 +1,24 @@
 package de.rostock.graph;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 public class Graph {
     private HashMap<GraphElement, ArrayList<GraphConnection>> graph; // graph representation - doesn't changes at all if diff views
     private HashMap<GraphElement, String> elementIdMap; // elementMapping - if we will add new vertex, we need to add id to elementIdMap
 
+    private ArrayList<GraphElement> elementOrder; // order of graph traveling
+
     public Graph() {
         graph = new HashMap<>();
         elementIdMap = new HashMap<>();
+        elementOrder = new ArrayList<>();
     }
 
     public Graph(Graph newGraph) {
         graph = new HashMap<>();
         elementIdMap = new HashMap<>();
+        elementOrder = new ArrayList<>();
+
 
         HashMap<GraphElement, ArrayList<GraphConnection>> graphMap = newGraph.getGraph();
 
@@ -34,9 +36,13 @@ public class Graph {
         return graph;
     }
 
+    public ArrayList<GraphElement> getElementOrder() {
+        return elementOrder;
+    }
+
     private void addElementToMap(final GraphElement element) {
         if (!elementIdMap.containsKey(element)) {
-            elementIdMap.put(element, element.getElementId());
+            elementIdMap.put(element, element.getViewChildId());
         }
     }
 
@@ -96,6 +102,10 @@ public class Graph {
         } else {
             throw new NoSuchElementException();
         }
+    }
+
+    public void setElementOrder(ArrayList<GraphElement> elementOrder) {
+        this.elementOrder = elementOrder;
     }
 
     private String graphToString() {

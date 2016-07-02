@@ -20,10 +20,13 @@ public class Main {
         try {
             options.load();
 
+
             Model oldModel = new Model(options.getOldModelPath());
             Model newModel = new Model(options.getNewModelPath());
 
-            new ModelDiff(oldModel, newModel, options.getDiffModelPath()).diff();
+            new ModelDiff(oldModel, newModel, options.getDiffModelPath(), options.getViewMapping()).diff();
+
+
 
         } catch (IOException e) {
             System.err.println("Problems with IO: " + e.getMessage());

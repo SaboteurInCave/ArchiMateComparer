@@ -4,9 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+/*
+    View mapping : newView(unique) -> oldView(not unique)
+ */
 
 public class Options {
     private String optionsPath;
@@ -22,6 +27,11 @@ public class Options {
 
         Gson gson = new Gson();
         properties = gson.fromJson(jsonContent, Properties.class);
+
+        // Transform list of view mapping to hashMap
+        properties.getViewMappingList().forEach(viewMappingEntry -> {
+            properties.setViewMapping(viewMappingEntry.getNewView(), viewMappingEntry.getOldView());
+        });
     }
 
     public String getOldModelPath() {
@@ -34,5 +44,9 @@ public class Options {
 
     public String getDiffModelPath() {
         return properties.getDiffModel();
+    }
+
+    public HashMap<String, String> getViewMapping() {
+        return properties.getViewMapping();
     }
 }

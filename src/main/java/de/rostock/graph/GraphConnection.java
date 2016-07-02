@@ -16,11 +16,11 @@ public class GraphConnection {
         this.edgeId = connection.getEdgeId();
     }
 
-    private GraphElement getVertex() {
+    public GraphElement getVertex() {
         return vertex;
     }
 
-    private String getEdgeType() {
+    public String getEdgeType() {
         return edgeType;
     }
 
